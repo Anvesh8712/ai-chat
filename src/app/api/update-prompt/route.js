@@ -18,7 +18,7 @@ export async function POST(req) {
     messages: [
       {
         role: "system",
-        content: `Please create a new system prompt for the following idea:\n\n${data.idea}`,
+        content: `Please create a new system prompt for the following idea and return only the prompt and nothing else:\n\n${data.idea}`,
       },
     ],
   });
