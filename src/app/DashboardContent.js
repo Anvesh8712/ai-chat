@@ -15,6 +15,7 @@
 //   List,
 //   ListItem,
 //   ListItemText,
+//   CircularProgress,
 // } from "@mui/material";
 // import React, { useState, useEffect, useRef } from "react";
 // import { useAuth } from "../app/Authcontext";
@@ -32,8 +33,10 @@
 //   const [systemPrompt, setSystemPrompt] = useState("");
 //   const [isSaveChatModalOpen, setIsSaveChatModalOpen] = useState(false);
 //   const [isClearChatModalOpen, setIsClearChatModalOpen] = useState(false);
+//   const [isSystemPromptModalOpen, setIsSystemPromptModalOpen] = useState(false);
 //   const [chatName, setChatName] = useState("");
 //   const [savedChats, setSavedChats] = useState([]);
+//   const [loading, setLoading] = useState(false);
 //   const bottomRef = useRef(null);
 
 //   useEffect(() => {
@@ -61,6 +64,7 @@
 //     const newMessage = { role: "user", content: message };
 //     setMessages((messages) => [...messages, newMessage]);
 //     setMessage("");
+//     setLoading(true);
 //     const response = await fetch("/api/chat", {
 //       method: "POST",
 //       headers: {
@@ -74,10 +78,11 @@
 //     const data = await response.json();
 //     const assistantMessage = { role: "assistant", content: data.message };
 //     setMessages((messages) => [...messages, assistantMessage]);
+//     setLoading(false);
 //   };
 
 //   const updateSystemPrompt = async () => {
-//     const response = await fetch("/api/update-system-prompt", {
+//     const response = await fetch("/api/update-prompt", {
 //       method: "POST",
 //       headers: {
 //         "Content-Type": "application/json",
@@ -93,6 +98,8 @@
 //           "Talk to your idea's personal service chatbot below! default: FitnessOne - fitness app",
 //       },
 //     ]);
+//     setIdea("");
+//     setIsSystemPromptModalOpen(false);
 //   };
 
 //   const handleSaveChat = () => {
@@ -145,6 +152,22 @@
 //     setIsClearChatModalOpen(false);
 //   };
 
+//   const handleNewChat = () => {
+//     handleClearChatConfirm(); // Clears the chat
+//   };
+
+//   const handleSelectChat = (chat) => {
+//     setMessages(chat.messages); // Load the selected chat's messages
+//   };
+
+//   const handleSystemPromptModalOpen = () => {
+//     setIsSystemPromptModalOpen(true);
+//   };
+
+//   const handleSystemPromptModalClose = () => {
+//     setIsSystemPromptModalOpen(false);
+//   };
+
 //   return (
 //     <Box width="100vw" height="100vh" display="flex">
 //       {/* Sidebar for Saved Chats */}
@@ -157,6 +180,16 @@
 //           [`& .MuiDrawer-paper`]: { width: 240, boxSizing: "border-box" },
 //         }}
 //       >
+//         <Box p={2}>
+//           <Button
+//             variant="contained"
+//             sx={{ bgcolor: "#004385", color: "white" }}
+//             fullWidth
+//             onClick={handleNewChat}
+//           >
+//             New Chat
+//           </Button>
+//         </Box>
 //         <Typography variant="h6" p={2}>
 //           Saved Chats
 //         </Typography>
@@ -166,7 +199,7 @@
 //               <ListItem
 //                 button
 //                 key={chat.id}
-//                 onClick={() => setMessages(chat.messages)}
+//                 onClick={() => handleSelectChat(chat)}
 //               >
 //                 <ListItemText primary={chat.chatName} />
 //               </ListItem>
@@ -183,7 +216,6 @@
 //         flexGrow={1}
 //         display="flex"
 //         flexDirection="column"
-//         alignItems="center"
 //         p={2}
 //         bgcolor="#f0f0f0"
 //       >
@@ -192,107 +224,130 @@
 //           display="flex"
 //           justifyContent="space-between"
 //           alignItems="center"
-//           bgcolor="primary.main"
+//           bgcolor="#031a6b"
 //           color="white"
 //           p={2}
 //           boxShadow={3}
 //           mb={2}
 //         >
 //           <Typography variant="h6">Welcome, {user.displayName}</Typography>
-//           <Button variant="contained" color="secondary" onClick={onLogout}>
+//           <Button
+//             variant="contained"
+//             sx={{ bgcolor: "#05b2dc", color: "white" }}
+//             onClick={onLogout}
+//           >
 //             Logout
 //           </Button>
 //         </Box>
-//         <Stack
-//           direction="column"
-//           width="500px"
-//           height="70vh"
-//           border="1px solid #ccc"
-//           borderRadius="8px"
-//           bgcolor="white"
-//           p={2}
-//           boxShadow={3}
-//           overflow="auto"
+//         <Box
+//           flexGrow={1}
+//           display="flex"
+//           justifyContent="center"
+//           alignItems="center"
 //         >
-//           <Stack direction="column" spacing={2}>
-//             {messages.map((message, index) => (
-//               <Box
-//                 key={index}
-//                 display="flex"
-//                 justifyContent={
-//                   message.role === "assistant" ? "flex-start" : "flex-end"
-//                 }
-//               >
-//                 <Paper
-//                   elevation={3}
-//                   sx={{
-//                     bgcolor:
-//                       message.role === "assistant"
-//                         ? "primary.main"
-//                         : "secondary.main",
-//                     color: "white",
-//                     borderRadius: 2,
-//                     p: 2,
-//                     maxWidth: "70%",
-//                   }}
+//           <Stack
+//             direction="column"
+//             width="100%"
+//             height="100%"
+//             maxWidth="900px"
+//             border="1px solid #ccc"
+//             borderRadius="8px"
+//             bgcolor="white"
+//             p={2}
+//             boxShadow={3}
+//             overflow="auto"
+//           >
+//             <Stack direction="column" spacing={2} flexGrow={1}>
+//               {messages.map((message, index) => (
+//                 <Box
+//                   key={index}
+//                   display="flex"
+//                   justifyContent={
+//                     message.role === "assistant" ? "flex-start" : "flex-end"
+//                   }
 //                 >
-//                   <Typography>{message.content}</Typography>
-//                 </Paper>
-//               </Box>
-//             ))}
-//             <Box ref={bottomRef} />
+//                   <Paper
+//                     elevation={3}
+//                     sx={{
+//                       bgcolor:
+//                         message.role === "assistant" ? "#033860" : "#087ca7",
+//                       color: "white",
+//                       borderRadius: 2,
+//                       p: 2,
+//                       maxWidth: "70%",
+//                     }}
+//                   >
+//                     <Typography>{message.content}</Typography>
+//                   </Paper>
+//                 </Box>
+//               ))}
+//               {loading && (
+//                 <Box display="flex" justifyContent="flex-start">
+//                   <Paper
+//                     elevation={3}
+//                     sx={{
+//                       bgcolor: "#033860",
+//                       color: "white",
+//                       borderRadius: 2,
+//                       p: 2,
+//                       maxWidth: "70%",
+//                       display: "flex",
+//                       alignItems: "center",
+//                     }}
+//                   >
+//                     <CircularProgress size={20} sx={{ mr: 2 }} />
+//                     <Typography>Loading...</Typography>
+//                   </Paper>
+//                 </Box>
+//               )}
+//               <Box ref={bottomRef} />
+//             </Stack>
+//             <Stack direction="row" spacing={2} width="100%" mt={2}>
+//               <TextField
+//                 label="Message"
+//                 fullWidth
+//                 variant="outlined"
+//                 value={message}
+//                 onChange={(e) => {
+//                   setMessage(e.target.value);
+//                 }}
+//               />
+//               <Button
+//                 variant="contained"
+//                 sx={{ bgcolor: "#004385", color: "white" }}
+//                 onClick={sendMessage}
+//               >
+//                 Send
+//               </Button>
+//             </Stack>
+//             <Stack direction="row" spacing={2} width="100%" mt={2}>
+//               <Button
+//                 variant="contained"
+//                 sx={{ bgcolor: "#05b2dc", color: "white" }}
+//                 onClick={handleSystemPromptModalOpen}
+//                 fullWidth
+//               >
+//                 Update System Prompt
+//               </Button>
+//               <Button
+//                 variant="contained"
+//                 sx={{ bgcolor: "#033860", color: "white" }}
+//                 onClick={handleSaveChat}
+//                 fullWidth
+//               >
+//                 Save Chat
+//               </Button>
+//               <Button
+//                 variant="contained"
+//                 sx={{ bgcolor: "#087ca7", color: "white" }}
+//                 onClick={handleClearChat}
+//                 fullWidth
+//               >
+//                 Clear Chat
+//               </Button>
+//             </Stack>
 //           </Stack>
-//         </Stack>
-//         <Stack direction="row" spacing={2} width="500px" mt={2}>
-//           <TextField
-//             label="Message"
-//             fullWidth
-//             variant="outlined"
-//             value={message}
-//             onChange={(e) => {
-//               setMessage(e.target.value);
-//             }}
-//           />
-//           <Button variant="contained" color="primary" onClick={sendMessage}>
-//             Send
-//           </Button>
-//         </Stack>
-//         <Stack direction="column" spacing={2} width="500px" mt={2}>
-//           <TextField
-//             label="Enter your idea for the service chatbot"
-//             fullWidth
-//             variant="outlined"
-//             value={idea}
-//             onChange={(e) => {
-//               setIdea(e.target.value);
-//             }}
-//           />
-//           <Button
-//             variant="contained"
-//             color="secondary"
-//             onClick={updateSystemPrompt}
-//           >
-//             Update System Prompt
-//           </Button>
-//         </Stack>
-//         <Stack direction="row" spacing={2} width="500px" mt={2}>
-//           <Button
-//             variant="contained"
-//             color="secondary"
-//             onClick={handleSaveChat}
-//             fullWidth
-//           >
-//             Save Chat
-//           </Button>
-//           <Button
-//             variant="contained"
-//             color="warning"
-//             onClick={handleClearChat}
-//             fullWidth
-//           >
-//             Clear Chat
-//           </Button>
-//         </Stack>
+//         </Box>
 
 //         {/* Save Chat Modal */}
 //         <Dialog open={isSaveChatModalOpen} onClose={handleSaveChatClose}>
@@ -309,10 +364,10 @@
 //             />
 //           </DialogContent>
 //           <DialogActions>
-//             <Button onClick={handleSaveChatClose} color="primary">
+//             <Button onClick={handleSaveChatClose} sx={{ color: "#031a6b" }}>
 //               Cancel
 //             </Button>
-//             <Button onClick={handleSaveChatConfirm} color="primary">
+//             <Button onClick={handleSaveChatConfirm} sx={{ color: "#031a6b" }}>
 //               Save
 //             </Button>
 //           </DialogActions>
@@ -328,11 +383,41 @@
 //             </Typography>
 //           </DialogContent>
 //           <DialogActions>
-//             <Button onClick={handleClearChatClose} color="primary">
+//             <Button onClick={handleClearChatClose} sx={{ color: "#031a6b" }}>
 //               Cancel
 //             </Button>
-//             <Button onClick={handleClearChatConfirm} color="error">
+//             <Button onClick={handleClearChatConfirm} sx={{ color: "#031a6b" }}>
 //               Clear
+//             </Button>
+//           </DialogActions>
+//         </Dialog>
+
+//         {/* System Prompt Update Modal */}
+//         <Dialog
+//           open={isSystemPromptModalOpen}
+//           onClose={handleSystemPromptModalClose}
+//         >
+//           <DialogTitle>Update System Prompt</DialogTitle>
+//           <DialogContent>
+//             <TextField
+//               autoFocus
+//               margin="dense"
+//               label="Enter your idea for the service chatbot"
+//               fullWidth
+//               variant="outlined"
+//               value={idea}
+//               onChange={(e) => setIdea(e.target.value)}
+//             />
+//           </DialogContent>
+//           <DialogActions>
+//             <Button
+//               onClick={handleSystemPromptModalClose}
+//               sx={{ color: "#031a6b" }}
+//             >
+//               Cancel
+//             </Button>
+//             <Button onClick={updateSystemPrompt} sx={{ color: "#031a6b" }}>
+//               Update
 //             </Button>
 //           </DialogActions>
 //         </Dialog>
@@ -358,6 +443,8 @@ import {
   List,
   ListItem,
   ListItemText,
+  Divider,
+  CircularProgress,
 } from "@mui/material";
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../app/Authcontext";
@@ -375,14 +462,17 @@ export default function DashboardContent({ user, onLogout }) {
   const [systemPrompt, setSystemPrompt] = useState("");
   const [isSaveChatModalOpen, setIsSaveChatModalOpen] = useState(false);
   const [isClearChatModalOpen, setIsClearChatModalOpen] = useState(false);
+  const [isSystemPromptModalOpen, setIsSystemPromptModalOpen] = useState(false);
   const [chatName, setChatName] = useState("");
   const [savedChats, setSavedChats] = useState([]);
+  const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
+    console.log(messages);
   }, [messages]);
 
   useEffect(() => {
@@ -404,6 +494,8 @@ export default function DashboardContent({ user, onLogout }) {
     const newMessage = { role: "user", content: message };
     setMessages((messages) => [...messages, newMessage]);
     setMessage("");
+    setLoading(true);
+
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: {
@@ -414,9 +506,34 @@ export default function DashboardContent({ user, onLogout }) {
         systemPrompt,
       }),
     });
+
     const data = await response.json();
-    const assistantMessage = { role: "assistant", content: data.message };
+    const assistantMessage = { role: "assistant", content: "" };
+
+    // Start printing the message with animation
     setMessages((messages) => [...messages, assistantMessage]);
+    printMessage(assistantMessage, data.message);
+    setLoading(false);
+  };
+
+  const printMessage = (message, fullContent) => {
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index < fullContent.length) {
+        setMessages((messages) => {
+          const updatedMessages = [...messages];
+          const lastMessage = updatedMessages[updatedMessages.length - 1];
+          updatedMessages[updatedMessages.length - 1] = {
+            ...lastMessage,
+            content: fullContent.slice(0, index + 1),
+          };
+          return updatedMessages;
+        });
+        index++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 3);
   };
 
   const updateSystemPrompt = async () => {
@@ -436,6 +553,8 @@ export default function DashboardContent({ user, onLogout }) {
           "Talk to your idea's personal service chatbot below! default: FitnessOne - fitness app",
       },
     ]);
+    setIdea("");
+    setIsSystemPromptModalOpen(false);
   };
 
   const handleSaveChat = () => {
@@ -496,6 +615,26 @@ export default function DashboardContent({ user, onLogout }) {
     setMessages(chat.messages); // Load the selected chat's messages
   };
 
+  const handleSystemPromptModalOpen = () => {
+    setIsSystemPromptModalOpen(true);
+  };
+
+  const handleSystemPromptModalClose = () => {
+    setIsSystemPromptModalOpen(false);
+  };
+
+  const interpretText = (text) => {
+    // Replace bold, italic, and other markdown-like syntax with appropriate HTML tags
+    let interpretedText = text
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Bold
+      .replace(/\*(.*?)\*/g, "<em>$1</em>") // Italic
+      .replace(/`(.*?)`/g, "<code>$1</code>") // Inline code
+      .replace(/\|/g, "<br/>") // Replace | with line breaks for simplicity
+      .replace(/(?:\r\n|\r|\n)/g, "<br />"); // Newlines to <br />
+
+    return { __html: interpretedText };
+  };
+
   return (
     <Box width="100vw" height="100vh" display="flex">
       {/* Sidebar for Saved Chats */}
@@ -506,154 +645,172 @@ export default function DashboardContent({ user, onLogout }) {
           width: 240,
           flexShrink: 0,
           [`& .MuiDrawer-paper`]: { width: 240, boxSizing: "border-box" },
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
         }}
       >
+        <Box>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            bgcolor="#031a6b"
+            color="white"
+            p={2}
+          >
+            <Typography variant="h6">Welcome, {user.displayName}</Typography>
+          </Box>
+          <Typography variant="h6" p={2}>
+            Saved Chats
+          </Typography>
+          <List>
+            {savedChats.length > 0 ? (
+              savedChats.map((chat) => (
+                <React.Fragment key={chat.id}>
+                  <ListItem button onClick={() => handleSelectChat(chat)}>
+                    <ListItemText primary={chat.chatName} />
+                  </ListItem>
+                  <Divider />
+                </React.Fragment>
+              ))
+            ) : (
+              <Typography variant="body2" p={2}>
+                No saved chats. Start a conversation and save it.
+              </Typography>
+            )}
+          </List>
+        </Box>
         <Box p={2}>
           <Button
             variant="contained"
-            color="primary"
+            sx={{ bgcolor: "#004385", color: "white" }}
             fullWidth
             onClick={handleNewChat}
           >
             New Chat
           </Button>
         </Box>
-        <Typography variant="h6" p={2}>
-          Saved Chats
-        </Typography>
-        <List>
-          {savedChats.length > 0 ? (
-            savedChats.map((chat) => (
-              <ListItem
-                button
-                key={chat.id}
-                onClick={() => handleSelectChat(chat)}
-              >
-                <ListItemText primary={chat.chatName} />
-              </ListItem>
-            ))
-          ) : (
-            <Typography variant="body2" p={2}>
-              No saved chats. Start a conversation and save it.
-            </Typography>
-          )}
-        </List>
       </Drawer>
 
       <Box
         flexGrow={1}
         display="flex"
         flexDirection="column"
-        alignItems="center"
         p={2}
         bgcolor="#f0f0f0"
       >
         <Box
-          width="100%"
+          flexGrow={1}
           display="flex"
-          justifyContent="space-between"
+          justifyContent="center"
           alignItems="center"
-          bgcolor="primary.main"
-          color="white"
-          p={2}
-          boxShadow={3}
-          mb={2}
         >
-          <Typography variant="h6">Welcome, {user.displayName}</Typography>
-          <Button variant="contained" color="secondary" onClick={onLogout}>
-            Logout
-          </Button>
-        </Box>
-        <Stack
-          direction="column"
-          width="500px"
-          height="70vh"
-          border="1px solid #ccc"
-          borderRadius="8px"
-          bgcolor="white"
-          p={2}
-          boxShadow={3}
-          overflow="auto"
-        >
-          <Stack direction="column" spacing={2}>
-            {messages.map((message, index) => (
-              <Box
-                key={index}
-                display="flex"
-                justifyContent={
-                  message.role === "assistant" ? "flex-start" : "flex-end"
-                }
-              >
-                <Paper
-                  elevation={3}
-                  sx={{
-                    bgcolor:
-                      message.role === "assistant"
-                        ? "primary.main"
-                        : "secondary.main",
-                    color: "white",
-                    borderRadius: 2,
-                    p: 2,
-                    maxWidth: "70%",
-                  }}
+          <Stack
+            direction="column"
+            width="100%"
+            height="100%"
+            maxWidth="900px"
+            border="1px solid #ccc"
+            borderRadius="8px"
+            bgcolor="white"
+            p={2}
+            boxShadow={3}
+            overflow="auto"
+          >
+            <Stack direction="column" spacing={2} flexGrow={1}>
+              {messages.map((message, index) => (
+                <Box
+                  key={index}
+                  display="flex"
+                  justifyContent={
+                    message.role === "assistant" ? "flex-start" : "flex-end"
+                  }
                 >
-                  <Typography>{message.content}</Typography>
-                </Paper>
-              </Box>
-            ))}
-            <Box ref={bottomRef} />
+                  <Paper
+                    elevation={3}
+                    sx={{
+                      bgcolor:
+                        message.role === "assistant" ? "#033860" : "#087ca7",
+                      color: "white",
+                      borderRadius: 2,
+                      p: 2,
+                      maxWidth: "70%",
+                    }}
+                  >
+                    <Typography
+                      dangerouslySetInnerHTML={interpretText(message.content)}
+                    ></Typography>
+                  </Paper>
+                </Box>
+              ))}
+              {loading && (
+                <Box display="flex" justifyContent="flex-start">
+                  <Paper
+                    elevation={3}
+                    sx={{
+                      bgcolor: "#033860",
+                      color: "white",
+                      borderRadius: 2,
+                      p: 2,
+                      maxWidth: "70%",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <CircularProgress size={20} sx={{ mr: 2 }} />
+                    <Typography>Loading...</Typography>
+                  </Paper>
+                </Box>
+              )}
+              <Box ref={bottomRef} />
+            </Stack>
+            <Stack direction="row" spacing={2} width="100%" mt={2}>
+              <TextField
+                label="Message"
+                fullWidth
+                variant="outlined"
+                value={message}
+                onChange={(e) => {
+                  setMessage(e.target.value);
+                }}
+              />
+              <Button
+                variant="contained"
+                sx={{ bgcolor: "#004385", color: "white" }}
+                onClick={sendMessage}
+              >
+                Send
+              </Button>
+            </Stack>
+            <Stack direction="row" spacing={2} width="100%" mt={2}>
+              <Button
+                variant="contained"
+                sx={{ bgcolor: "#05b2dc", color: "white" }}
+                onClick={handleSystemPromptModalOpen}
+                fullWidth
+              >
+                Update System Prompt
+              </Button>
+              <Button
+                variant="contained"
+                sx={{ bgcolor: "#033860", color: "white" }}
+                onClick={handleSaveChat}
+                fullWidth
+              >
+                Save Chat
+              </Button>
+              <Button
+                variant="contained"
+                sx={{ bgcolor: "#087ca7", color: "white" }}
+                onClick={handleClearChat}
+                fullWidth
+              >
+                Clear Chat
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
-        <Stack direction="row" spacing={2} width="500px" mt={2}>
-          <TextField
-            label="Message"
-            fullWidth
-            variant="outlined"
-            value={message}
-            onChange={(e) => {
-              setMessage(e.target.value);
-            }}
-          />
-          <Button variant="contained" color="primary" onClick={sendMessage}>
-            Send
-          </Button>
-        </Stack>
-        <Stack direction="column" spacing={2} width="500px" mt={2}>
-          <TextField
-            label="Enter your idea for the service chatbot"
-            fullWidth
-            variant="outlined"
-            value={idea}
-            onChange={(e) => {
-              setIdea(e.target.value);
-            }}
-          />
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={updateSystemPrompt}
-          >
-            Update System Prompt
-          </Button>
-        </Stack>
-        <Stack direction="row" spacing={2} width="500px" mt={2}>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleSaveChat}
-            fullWidth
-          >
-            Save Chat
-          </Button>
-          <Button
-            variant="contained"
-            color="warning"
-            onClick={handleClearChat}
-            fullWidth
-          >
-            Clear Chat
-          </Button>
-        </Stack>
+        </Box>
 
         {/* Save Chat Modal */}
         <Dialog open={isSaveChatModalOpen} onClose={handleSaveChatClose}>
@@ -670,10 +827,10 @@ export default function DashboardContent({ user, onLogout }) {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleSaveChatClose} color="primary">
+            <Button onClick={handleSaveChatClose} sx={{ color: "#031a6b" }}>
               Cancel
             </Button>
-            <Button onClick={handleSaveChatConfirm} color="primary">
+            <Button onClick={handleSaveChatConfirm} sx={{ color: "#031a6b" }}>
               Save
             </Button>
           </DialogActions>
@@ -689,11 +846,41 @@ export default function DashboardContent({ user, onLogout }) {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClearChatClose} color="primary">
+            <Button onClick={handleClearChatClose} sx={{ color: "#031a6b" }}>
               Cancel
             </Button>
-            <Button onClick={handleClearChatConfirm} color="error">
+            <Button onClick={handleClearChatConfirm} sx={{ color: "#031a6b" }}>
               Clear
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* System Prompt Update Modal */}
+        <Dialog
+          open={isSystemPromptModalOpen}
+          onClose={handleSystemPromptModalClose}
+        >
+          <DialogTitle>Update System Prompt</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Enter your idea for the service chatbot"
+              fullWidth
+              variant="outlined"
+              value={idea}
+              onChange={(e) => setIdea(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={handleSystemPromptModalClose}
+              sx={{ color: "#031a6b" }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={updateSystemPrompt} sx={{ color: "#031a6b" }}>
+              Update
             </Button>
           </DialogActions>
         </Dialog>
